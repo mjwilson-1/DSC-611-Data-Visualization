@@ -1,0 +1,93 @@
+---
+title: "DSC-611 Data Visualization Week 2 Assignment - Wilson"
+output: html_notebook
+---
+
+Michael Wilson DSC-611\
+Data Visualization - Fall 2022\
+Week 2 Visualization Assignment - Pie Charts
+
+### Dataset
+
+The dataset for this assignment is the Vehicles table from the United States Environmental Protection Agency (EPA). It is available in multiple formats and can be downloaded through FuelEconomy.gov (EPA, 2022).
+
+#### Pre-Processing
+
+In this assignment, we are trying to visualize categorical data in a pie chart. In this case, the relative number of make and model offerings by the type of energy or fuel used. The data table goes all the way back to 1985 when battery-powered electric vehicles really weren't available in significant quantities. From the Vehicles table, we will need to restrict the dataset to vehicles 2020 or newer.
+
+```{r}
+library(tidyverse)
+library(gcookbook)
+library(readr)
+library(dplyr)
+library(plotly)
+```
+
+```{r}
+#read in data and select appropriate subset
+vehicles <- read_csv("Grad School 2021/DSC-611 Data Visualization/vehicles.csv")
+y2020_vehicles <- subset(vehicles, year == 2020)
+cars4 <- select(y2020_vehicles, "drive", "fuelType1", "make", "model")
+```
+
+```{r}
+#Get counts of model by type of fuel
+cars5 <- cars4 %>%
+group_by(fuelType1) %>%
+summarise(qty = n())
+cars5
+```
+### First Pie Chart
+
+```{r}
+plot_ly(cars5, labels = ~fuelType1, values = ~qty, type = 'pie', textposition = 'outside', textinfo = 'percent', title = 'Qty of Models Offered by Fuel Type, 2020')
+```
+Above is the pie chart representation of the relative proportions for the number of model offerings sorted by the type of fuel or electricity. While the pie chart is a colorful representation, with 5 categories, 3 of them very small, it's hard to visually compare the smaller sections and notice the potentially significant differences between those proportions simply because they are all very small. This representation is not much better than the table created to make it. Without context, we don't know the those proportions are good, bad, or even noteworthy. The default options for info shown on mouse hover provides more detail, including the quantities for each class, but that assumes looking at this chart on a computer.
+
+#### Improving the chart
+
+The first chart could be very effectively presented in the form of a table and provide nearly the same level of information. But to answer any deeper questions like change or progress, we can make the pie chart preferred over a table by providing a series of pie charts to show progression and change over time. Seeing the numbers change in tabular format would not be as easy to notice. The first pie chart is just a snapshot in time. We can help add informative value by creating the same basic chart, just using different snapshots in time. Here, we will add two pie charts, one from the year 2000, and another from the year 2010.
+
+```{r}
+#Make the other 2 data tables for 2000 and 2010
+y2000_vehicles <- subset(vehicles, year == 2000)
+cars2000 <- select(y2000_vehicles, "drive", "fuelType1", "make", "model")
+y2010_vehicles <- subset(vehicles, year == 2010)
+cars2010 <- select(y2010_vehicles, "drive", "fuelType1", "make", "model")
+#Get the quantities by Fuel Type
+cars2000t <- cars2000 %>%
+group_by(fuelType1) %>%
+summarise(qty = n())
+cars2000t
+```
+```{r}
+cars2010t <- cars2010 %>%
+group_by(fuelType1) %>%
+summarise(qty = n())
+cars2010t
+```
+```{r}
+combo_pie <- plot_ly()
+combo_pie <- combo_pie %>% add_pie(data = cars2000t, labels = ~fuelType1, values = ~qty,
+                         name = "2000", title = "2000", domain = list(row = 0, column = 0))
+combo_pie <- combo_pie %>% add_pie(data = cars2010t, labels = ~fuelType1, values = ~qty,
+                         name = "2010", title = "2010", domain = list(row = 0, column = 1))
+combo_pie <- combo_pie %>% add_pie(data = cars5, labels = ~fuelType1, values = ~qty,
+                         name = "2020", title = "2020", domain = list(row = 0, column = 2))
+combo_pie <- combo_pie %>% layout(title = "Offerings by Fuel Type, 2000-2020",
+                      grid=list(rows=1, columns=3), legend = list(orientation = 'h'),
+                      xaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE),
+                      yaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE))
+combo_pie
+```
+By combining all three in order in a series of pie charts, we can now see change over time and do more interesting things visually like perceive patterns and trends. Compared with a simple snapshot in time, we can now see the progression over time of increased offerings calling for premium gasoline instead of regular-grade. We can also see that while natural gas powered never had many offerings, and actually declined during the review period. We also see electric vehicles going from just under 0.5% to over 3%. A six-fold increase is quite a lot for such a small portion of the overall market offerings.
+
+### Suitability of Pie Charts
+
+As with the "No Free Lunch" theorem, there are no good blanket rules about the usage of pie charts. As shown, a pie chart representing a singular point in time, offered without context, can easily be misleading. As the number of categories to represent in the pie chart get added, they do become less useful as the difference between a 5 percent slice of the pie and a 7 percent slice is hard to tease out when there are 10 other categories all with single digit percentage slices.
+
+However, for a limited number of categories (usually 5 or less), and large disparities in the proportions of the categories, a pie chart can highlight the large differences quickly and easily. Usually, though, a pie chart needs context to help convey a message. Thinking about how a pie chart is made in *ggplot2* as really just a single-width stacked bar graph, presented in polar coordinates offers some of the real weaknesses of pie charts. Specifically, a pie chart can usually be expressed in multiple other forms and be just as easy to use and understand. Coupling the relative redundancy of pie charts with the challenges in showing a lot of categories in a clear way doesn't demand that they be avoided, but rather one should potentially look for another representation that works as well or better. Pie charts might be a type of visualization to avoid for a lot of situations, but there would still remain the situations - infrequent as they may be - where a pie chart is highly effective and appropriate.
+
+### References:
+
+United States Environmental Protection Agency. (2021). Vehicles.csv [Data set] Retrieved from: <https://www.fueleconomy.gov/feg/epadata/vehicles.csv> (Accessed 8 Sep 2022).
