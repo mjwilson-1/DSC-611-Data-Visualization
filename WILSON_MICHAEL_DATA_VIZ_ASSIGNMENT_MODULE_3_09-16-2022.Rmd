@@ -1,0 +1,91 @@
+---
+title: "DSC-611 Data Visualization Week 3 Assignment - Wilson"
+output: html_notebook
+---
+
+Michael Wilson DSC-611\
+Data Visualization - Fall 2022\
+Week 3 Visualization Assignment - Scatterplots
+
+### Dataset
+
+The dataset for this week's visualization assignment is the gss_wages table. It is included with the stevedata library. It details 11 variables, including education level, gender, age and income, adjusted to 1986 US Dollars, from 1974-2018. What we are looking to gain through the use of scatterplots for this assignment is understanding of the factors that may influence income among full-time workers, along with a better representation of their relative strength of influence.
+
+```{r}
+#Load necessary libraries
+library(tidyverse)
+library(gcookbook)
+library(readr)
+library(dplyr)
+library(ggplot2)
+library(stevedata)
+```
+
+### Pre-processing
+
+Before making plots, there is some basic data cleansing and selection tasks necessary. First, we are only concerned with the most recent data in that table, not the entire time frame, so we will select a subset of just 2018 responses. Also, there are a number of non-responses for a target variable, income, so we will drop those rows from the table. Finally, in comparing income, we should try to control for employment status. In this table, it could be full-time, part-time, unemployed, housekeeper, retired, student, and a couple others. Wanting an apples-to-apples comparison leads us to restrict the data set to full-time working status. The other statuses have highly varying circumstances, such as widely differing work hours while part time. Comparatively, full-time has a fairly standard and steady set of circumstances.
+
+```{r}
+#Select a manageable subset of the data and remove rows without income data and part-time responses
+wages2018 <- subset(gss_wages, year == 2018)
+wages2018a <- drop_na(wages2018, realrinc)
+wages2018b <- subset(wages2018a, wrkstat == "Full-Time")
+
+```
+
+### First Plot
+
+For our first scatterplot, we are going to plot just our x and y variables, to see what that looks like simply comparing age and income:
+
+```{r}
+ggplot(wages2018b, aes(x = age, y = realrinc)) +
+geom_point() +
+labs(x = "Age", y = "Income (1986 $USD)", title = "Income vs Age (2018)")
+
+```
+
+In the first scatterplot, we can visually observe not just that the data is widely distributed, where a particular income level may be found at a wide range of ages, and a particular age will have a wide range of income responses. But with the plot we can also see an overall trend indicating that the lowest incomes tend to go away with age and the highest incomes don't start getting reported until 30 years of age or so. Also, there is a noticeable dropoff starting around age 65, which could the effect of respondents now being a greater proportion retired persons, thereby limiting the number of income responses at those ages, primarily because only full-time employed responses were selected for inclusion in the data frame.
+
+## Followup Plots
+
+While it's nice to see a broad overall correlation of increased income with age, the data frame has more dimensions recorded along with each response that might bring some additional insights that may help to explain some of the difference in income responses.
+
+In addition to age, it seems reasonable to think that education levels might play a role. It is also an interesting question to see if there is a noticeable pattern or trend with relation to gender. We can add instructions within the code to not just plot a point in space, but also to format that point using maps to other functions like color and shape. The next plot uses the same dataset as the first, but adds a layer of data to represent gender response mapped to colors:
+
+```{r}
+ggplot(wages2018b, aes(x = age, y = realrinc, color = gender)) +
+geom_point() +
+labs(x = "Age", y = "Income (1986 $USD)", title = "Income vs Age (2018)", color = "Gender")
+
+```
+
+By adding anther layer of data into the scatterplot using colors for gender, we can see more than just the trend for ages. We can also see a general level above which the distribution of genders for those incomes responses become considerably more male than female. At the highest levels, we see some balance return, but the region between roughly 25,000 and 60,000 has noticeable more male responses than female responses.
+
+We can add another layer using shapes to include some information about the education levels associated with those income responses.
+
+```{r}
+ggplot(wages2018b, aes(x = age, y = realrinc, color = gender, shape = educcat)) +
+geom_point() +
+labs(x = "Age", y = "Income (1986 $USD)", title = "Income vs Age (2018)", color = "Gender", shape = "Level of Education")
+
+```
+
+Using the added layer of education represented by shapes we can gain even further insight, although the visualization is started to get cluttered and complicated by the amount and complexity. At each general level for income, we can see that most education levels get represented across the full spectrum. What is noticeable is the responses from those with less than high school being almost exclusively confined to the lower income levels. With the color still representing the gender variable, that distinction does seem to jump out more readily than the many shapes for the many education responses. That chart might benefit from some simplification or de-cluttering by combining some categories to check to see if a major divide seems to happen at a higher level such as simply going to college or not. You could also exclude some responses if they aren't interesting. A user interested in making a decision to attend grad school after getting an undergrad likely isn't interested in the results for individuals that didn't pursue any education after high school. Eliminating uninteresting responses or consolidating similar categories may reduce the information overload enough to be more intelligible.
+
+## Scatterplot Usage
+
+Scatterplots are particularly useful during exploratory data analysis, when trying to get an overall sense of the data presented. While an x-y plot automatically and easily shows two responses as a single data point, adding layers can help provide a more detailed look at the data and the factors that influence its relative position in the plot. However, there gets to be a limit to how many variables you can visualize and make effective use of. In addition to color and shape, sometimes, particularly for a continuous variable, size of the data marker can be a better way to represent that additional information layer. As before, there's unfortunately no free lunch in the form of a defined way to present scatterplots that are appropriate or most effective and works under all circumstances.
+
+## Discussion on Data Visualization Examples
+
+The concept introduced in chapter 3 of the class text provides interesting insight in terms of finding ways to bring additional information and data into graphs of varying sorts to better communicate a message or change levels along the data-information-knowledge-wisdom hierarchy. For instance, noting the ages of data scientists and plotting it in an unequal-bin histogram tells us what the ages are of the population. But by highlighting the breaks in social generations we can get a better sense of the ages and attitudes (and their prevalence) of the data science sub-populations. Using simple bits of text to highlight just which group is earning the most tells us not just who they are, but with the bar graph, we also see just how old they are, and the comparatively small proportion of the population that group comprises. That chart then manages to tell us that the stories oh high-earnings might be more related to age and experience, and that a new-grad, new-to-the-field data scientist should not realistically expect to have the same results as someone with significant practice and experience. (Berengueres et al, 2019, pp 62-66)
+
+Expanding from that, the inclusion of the additional data to introduce a narrative as suggested by the text was interesting. However, it seems unconventional and appears to provide a chance to lose some of the message by introducing bias or confusion. Representing market usage sorted by data science library in podium format was interesting, but podiums report performance as a rank. Yes, sci-kit learn has a truly large market share, but the next two are actually fairly close, and rankings 2 and 3 that are close to each other but not number 1 isn't well-communicated. (Berengeures at al, 2019, p 71) I think a better visual analogy could be made using bars of representative length to show the close finish between the last two, and perhaps gold-silver-bronze medals or first-place-show ribbons if the ranking was the most important thing to convey to the audience.
+
+In "Searching Racism after George Floyd," a graph showing the relative index scores for a lot o countries for a lot of days is something that might be considered overload, since it doesn't group any of the many localities together to reduce clutter. It is a large amount of data, but since it is in an easy to digest gradient, it's easy to spot the relative difference using the shadings. Adding in the line for when George Floyd was actually killed provides a stark reference point. It is easy to see that within a few days of that event, the number of related searches goes up, and fairly across the board, and stays elevated for some time following that. It also provides a good reference point for the timing between an action that ends up stirring up tremendous interest in the topic, and how long it takes news of that action to reach those that might initiate these searches. The line of dark boxes is almost as well defined as the red line marking the date of George Floyd's killing. Using hose tow dark lines effectively cuts across the information overload of all the different countries and languages being shown in that graphic. (Barrie, 2020)
+
+# References
+
+Berengueres, J., Fenwick, A., & Sandell, M. (2019). Introduction to data visualization & storytelling (2nd ed.). Independently Published.
+
+Barrie, C. (2020). Searching racism after George Floyd. Socius: Sociological Research for a Dynamic World, 6, 237802312097150. <https://doi.org/10.1177/2378023120971507>
